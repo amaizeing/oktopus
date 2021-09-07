@@ -1,11 +1,11 @@
 package test.response.wrap;
 
-import com.xd.oktopus.annotation.OktopusCacheKeys;
-import com.xd.oktopus.annotation.OktopusCacheTtl;
-import com.xd.oktopus.annotation.OktopusDependOn;
-import com.xd.oktopus.annotation.OktopusRequestHeader;
-import com.xd.oktopus.annotation.OktopusRequestUrls;
-import com.xd.oktopus.annotation.method.GetRequest;
+import com.amaizeing.oktopus.annotation.OktopusCacheKeys;
+import com.amaizeing.oktopus.annotation.OktopusCacheTtl;
+import com.amaizeing.oktopus.annotation.OktopusDependOn;
+import com.amaizeing.oktopus.annotation.OktopusRequestHeader;
+import com.amaizeing.oktopus.annotation.OktopusRequestUrls;
+import com.amaizeing.oktopus.annotation.method.GetRequest;
 import lombok.Data;
 
 import java.util.Map;

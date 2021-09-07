@@ -1,22 +1,21 @@
 package test.response.wrap;
 
-import com.xd.oktopus.Oktopus;
-import com.xd.oktopus.OktopusFlow;
-import com.xd.oktopus.OktopusRequest;
-import com.xd.oktopus.RetryConfig;
+import com.amaizeing.oktopus.Oktopus;
+import com.amaizeing.oktopus.OktopusFlow;
+import com.amaizeing.oktopus.OktopusRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public class WrapResponseApplication {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WrapResponseApplication.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
 
         Oktopus.load();
 
@@ -25,16 +24,14 @@ public class WrapResponseApplication {
     }
 
     static OktopusFlow getOrderDetailFlow() {
-        final var retryConfig = RetryConfig.builder()
-                .retryTimes(2)
-                .backoffCoefficient(2)
-                .initialInterval(Duration.ofMillis(500))
-                .build();
+//        final var retryConfig = RetryConfig.builder()
+//                .retryTimes(2)
+//                .backoffCoefficient(2)
+//                .initialInterval(Duration.ofMillis(500))
+//                .build();
 
         var tokenRequest = OktopusRequest.on(GetToken.class)
                 .requestBodyArgs("dat.bui", "123")
-                .timeout(Duration.ofMillis(2_000))
-                .retryConfig(retryConfig)
                 .onServerError((request, response) -> {
                     LOGGER.error("Exception", response.getException());
                 });
@@ -49,9 +46,10 @@ public class WrapResponseApplication {
         return getOrderDetailFlow;
     }
 
-    static void async(OktopusFlow flow) {
+    static void async(OktopusFlow flow) throws ExecutionException, InterruptedException {
         final var error = flow.async();
         System.out.println("finish async...");
+        error.get();
 
         final GetToken.WrapTokenResponse tokenResponse = flow.getResponse(GetToken.class);
         System.out.println(tokenResponse.getData().getToken());

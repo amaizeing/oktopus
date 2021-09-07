@@ -1,9 +1,9 @@
 package test.response.raw;
 
-import com.xd.oktopus.annotation.OktopusDependOn;
-import com.xd.oktopus.annotation.OktopusRequestHeader;
-import com.xd.oktopus.annotation.OktopusRequestUrl;
-import com.xd.oktopus.annotation.method.GetRequest;
+import com.amaizeing.oktopus.annotation.OktopusDependOn;
+import com.amaizeing.oktopus.annotation.OktopusRequestHeader;
+import com.amaizeing.oktopus.annotation.OktopusRequestUrl;
+import com.amaizeing.oktopus.annotation.method.GetRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

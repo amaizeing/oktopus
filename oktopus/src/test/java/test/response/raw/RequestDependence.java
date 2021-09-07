@@ -1,8 +1,8 @@
 package test.response.raw;
 
-import com.xd.oktopus.annotation.OktopusDependOn;
-import com.xd.oktopus.annotation.OktopusRequestUrl;
-import com.xd.oktopus.annotation.method.GetRequest;
+import com.amaizeing.oktopus.annotation.OktopusDependOn;
+import com.amaizeing.oktopus.annotation.OktopusRequestUrl;
+import com.amaizeing.oktopus.annotation.method.GetRequest;
 
 public class RequestDependence {
 

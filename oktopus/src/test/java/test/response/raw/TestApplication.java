@@ -1,8 +1,8 @@
 package test.response.raw;
 
-import com.xd.oktopus.Oktopus;
-import com.xd.oktopus.OktopusFlow;
-import com.xd.oktopus.OktopusRequest;
+import com.amaizeing.oktopus.Oktopus;
+import com.amaizeing.oktopus.OktopusFlow;
+import com.amaizeing.oktopus.OktopusRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

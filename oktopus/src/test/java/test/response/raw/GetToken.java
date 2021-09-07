@@ -1,13 +1,13 @@
 package test.response.raw;
 
-import com.xd.oktopus.Oktopus;
-import com.xd.oktopus.annotation.OktopusCacheKey;
-import com.xd.oktopus.annotation.OktopusCacheTtl;
-import com.xd.oktopus.annotation.OktopusRequestBody;
-import com.xd.oktopus.annotation.OktopusRequestHeader;
-import com.xd.oktopus.annotation.OktopusRequestUrl;
-import com.xd.oktopus.annotation.OktopusResponseBody;
-import com.xd.oktopus.annotation.method.PostRequest;
+import com.amaizeing.oktopus.Oktopus;
+import com.amaizeing.oktopus.annotation.OktopusCacheKey;
+import com.amaizeing.oktopus.annotation.OktopusCacheTtl;
+import com.amaizeing.oktopus.annotation.OktopusRequestBody;
+import com.amaizeing.oktopus.annotation.OktopusRequestHeader;
+import com.amaizeing.oktopus.annotation.OktopusRequestUrl;
+import com.amaizeing.oktopus.annotation.OktopusResponseBody;
+import com.amaizeing.oktopus.annotation.method.PostRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
