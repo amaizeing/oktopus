@@ -1,14 +1,16 @@
 package test.response.raw;
 
-import com.amaizeing.oktopus.Oktopus;
-import com.amaizeing.oktopus.OktopusFlow;
-import com.amaizeing.oktopus.OktopusRequest;
+import io.github.amaizeing.oktopus.Oktopus;
+import io.github.amaizeing.oktopus.OktopusFlow;
+import io.github.amaizeing.oktopus.OktopusRequest;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 public class TestApplication {
@@ -21,36 +23,50 @@ public class TestApplication {
 
     }
 
+    @SneakyThrows
     static void test() {
+        final var requestId = UUID.randomUUID().toString();
+
         var tokenRequest = OktopusRequest.on(GetToken.class)
+                .urlArgs("http://localhost:9090/login/")
+                .headersArgs(requestId)
                 .requestBodyArgs("dat.bui", "123");
+
         var orderRequest = OktopusRequest.on(GetOrder.class)
-                .urlArgs(1);
-        var orderDetailRequest = OktopusRequest.on(GetOrderDetail.class);
+                .headersArgs(requestId)
+                .urlArgs("http://localhost:9090/orders/1");
 
-        var getOrderDetailFlow = OktopusFlow.register();
-        getOrderDetailFlow.append(tokenRequest)
+        var orderDetailRequest = OktopusRequest.on(GetOrderDetail.class)
+                .headersArgs(requestId)
+                .urlArgs("http://localhost:9090/order-details/");
+
+        var orderShipmentRequest = OktopusRequest.on(GetOrderShipment.class)
+                .headersArgs(requestId)
+                .urlArgs("http://localhost:9090/shipments/");
+
+        var flow = OktopusFlow.register()
+                .append(tokenRequest)
                 .append(orderRequest)
-                .append(orderDetailRequest);
+                .append(orderDetailRequest)
+                .append(orderShipmentRequest);
 
-        final var error = getOrderDetailFlow.sync();
-        if (error.isPresent()) {
-            log.error("Error on executing flow with request: {}", error.get().getRequest(), error.get().getException());
+        final var error = flow.execute();
+        if (error.get().isPresent()) {
+            log.error("Error on executing flow with request: {}", error.get().get().getRequest(), error.get().get().getException());
             return;
         }
 
-        final var tokenResponse = getOrderDetailFlow.getResponse(GetToken.class, GetToken.TokenResponse.class);
-        System.out.println(tokenResponse.getToken());
+        final var tokenResponse = flow.getResponse(GetToken.class, GetToken.ResponseBody.class);
+        log.info("Token response: {}", tokenResponse);
 
-        final GetOrder.OrderResponse orderResponse = getOrderDetailFlow.getResponse(GetOrder.class);
-        System.out.println(orderResponse.getOrderId());
-        System.out.println(orderResponse.getOrderDetailIds());
+        final GetOrder.Response orderResponse = flow.getResponse(GetOrder.class);
+        log.info("Order response: {}", orderResponse);
 
-        final Map<Long, GetOrderDetail.OrderDetailResponse> orderDetailResponses = getOrderDetailFlow.getResponse(GetOrderDetail.class);
-        orderDetailResponses.forEach((k, v) -> {
-            System.out.println(v.getOrderId() + " " + v.getOrderDetailId() + " " + v.getDescription());
-        });
+        final Map<Long, GetOrderDetail.Response> orderDetailResponses = flow.getResponse(GetOrderDetail.class);
+        orderDetailResponses.forEach((orderDetailId, response) -> log.info("Order detail response: {}", response));
 
+        final Map<Long, GetOrderDetail.Response> shipmentResponses = flow.getResponse(GetOrderShipment.class);
+        shipmentResponses.forEach((shipmentId, response) -> log.info("Shipment response: {}", response));
     }
 
     static void testLayerDependence() {

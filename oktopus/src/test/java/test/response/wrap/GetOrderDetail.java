@@ -1,11 +1,14 @@
 package test.response.wrap;
 
-import com.amaizeing.oktopus.annotation.OktopusCacheKeys;
-import com.amaizeing.oktopus.annotation.OktopusCacheTtl;
-import com.amaizeing.oktopus.annotation.OktopusDependOn;
-import com.amaizeing.oktopus.annotation.OktopusRequestHeader;
-import com.amaizeing.oktopus.annotation.OktopusRequestUrls;
-import com.amaizeing.oktopus.annotation.method.GetRequest;
+import io.github.amaizeing.oktopus.annotation.OktopusCacheKeys;
+import io.github.amaizeing.oktopus.annotation.OktopusCacheTtl;
+import io.github.amaizeing.oktopus.annotation.OktopusDependOn;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestBodies;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestBody;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestHeader;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestHeaders;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestUrls;
+import io.github.amaizeing.oktopus.annotation.method.Get;
 import lombok.Data;
 
 import java.util.Map;
@@ -13,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@GetRequest(responseType = GetOrderDetail.WrapOrderDetailResponse.class)
+@Get(onSuccess = GetOrderDetail.WrapOrderDetailResponse.class)
 public class GetOrderDetail {
 
     @OktopusDependOn(GetToken.class)
@@ -31,10 +34,10 @@ public class GetOrderDetail {
     }
 
     @OktopusRequestHeader
-    public Map<String, String> initHeader() {
-        return Map.of("x-token", tokenResponse.getData().getToken());
+    public Map<String, Object> initHeader() {
+        return Map.of("x-token", tokenResponse.getData().getToken(),
+                      "x-order-detail-id", 1);
     }
-
 
     @OktopusCacheKeys
     public Map<Long, String> cacheKeys() {

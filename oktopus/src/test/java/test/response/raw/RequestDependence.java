@@ -1,13 +1,13 @@
 package test.response.raw;
 
-import com.amaizeing.oktopus.annotation.OktopusDependOn;
-import com.amaizeing.oktopus.annotation.OktopusRequestUrl;
-import com.amaizeing.oktopus.annotation.method.GetRequest;
+import io.github.amaizeing.oktopus.annotation.OktopusDependOn;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestUrl;
+import io.github.amaizeing.oktopus.annotation.method.Get;
 
 public class RequestDependence {
 
 
-    @GetRequest
+    @Get
     static final class Request01 {
 
         @OktopusRequestUrl
@@ -17,7 +17,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request02 {
 
         @OktopusRequestUrl
@@ -27,7 +27,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request03 {
 
         @OktopusRequestUrl
@@ -37,7 +37,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request04 {
 
         @OktopusDependOn(Request01.class)
@@ -50,7 +50,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request05 {
 
         @OktopusDependOn(Request01.class)
@@ -63,7 +63,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request06 {
 
         @OktopusDependOn(Request04.class)
@@ -79,7 +79,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request07 {
 
         @OktopusDependOn(Request02.class)
@@ -92,7 +92,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request08 {
 
         @OktopusDependOn(Request06.class)
@@ -111,7 +111,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request09 {
 
         @OktopusDependOn(Request03.class)
@@ -124,7 +124,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request10 {
 
         @OktopusDependOn(Request08.class)
@@ -140,7 +140,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request11 {
 
         @OktopusRequestUrl
@@ -150,7 +150,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request12 {
 
         @OktopusDependOn(Request10.class)
@@ -163,7 +163,7 @@ public class RequestDependence {
 
     }
 
-    @GetRequest
+    @Get
     static final class Request13 {
 
         @OktopusDependOn(Request06.class)

@@ -1,12 +1,12 @@
 package test.response.wrap;
 
-import com.amaizeing.oktopus.annotation.OktopusCacheKey;
-import com.amaizeing.oktopus.annotation.OktopusCacheTtl;
-import com.amaizeing.oktopus.annotation.OktopusRequestBody;
-import com.amaizeing.oktopus.annotation.OktopusRequestHeader;
-import com.amaizeing.oktopus.annotation.OktopusRequestUrl;
-import com.amaizeing.oktopus.annotation.OktopusResponseBody;
-import com.amaizeing.oktopus.annotation.method.PostRequest;
+import io.github.amaizeing.oktopus.annotation.OktopusCacheKey;
+import io.github.amaizeing.oktopus.annotation.OktopusCacheTtl;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestBody;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestHeader;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestUrl;
+import io.github.amaizeing.oktopus.annotation.OktopusResponseBody;
+import io.github.amaizeing.oktopus.annotation.method.Post;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-@PostRequest(responseType = GetToken.WrapTokenResponse.class)
+@Post(onSuccess = GetToken.WrapTokenResponse.class, onFailure = Map.class)
 public class GetToken {
 
     @OktopusRequestUrl

@@ -1,85 +1,64 @@
 package test.response.raw;
 
-import com.amaizeing.oktopus.Oktopus;
-import com.amaizeing.oktopus.annotation.OktopusCacheKey;
-import com.amaizeing.oktopus.annotation.OktopusCacheTtl;
-import com.amaizeing.oktopus.annotation.OktopusRequestBody;
-import com.amaizeing.oktopus.annotation.OktopusRequestHeader;
-import com.amaizeing.oktopus.annotation.OktopusRequestUrl;
-import com.amaizeing.oktopus.annotation.OktopusResponseBody;
-import com.amaizeing.oktopus.annotation.method.PostRequest;
+import io.github.amaizeing.oktopus.annotation.OktopusCacheKey;
+import io.github.amaizeing.oktopus.annotation.OktopusCacheTtl;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestBody;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestHeader;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestUrl;
+import io.github.amaizeing.oktopus.annotation.OktopusResponseBody;
+import io.github.amaizeing.oktopus.annotation.method.Post;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-@PostRequest(responseType = GetToken.TokenResponse.class)
+@Post(onSuccess = GetToken.ResponseBody.class)
 public class GetToken {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Oktopus.class);
-
     @OktopusRequestUrl
-    public String url() {
-        return "http://localhost:9090/login/";
+    public String url(String url) {
+        return url;
     }
 
     @OktopusRequestHeader
-    public Map<String, String> headers() {
-        return Map.of();
+    public Map<String, String> headers(String requestId) {
+        return Map.of("X-Request-Id", requestId);
     }
 
     @OktopusRequestBody
-    public TokenRequest requestBody(String userName, String password) {
-        return new TokenRequest(userName, password);
+    public RequestBody requestBody(String userName, String password) {
+        return new RequestBody(userName, password);
     }
 
     @OktopusCacheKey
-    public String cacheKey(@OktopusRequestBody TokenRequest tokenRequest) {
+    public String cacheKey(@OktopusRequestBody RequestBody tokenRequest) {
         return tokenRequest.getUserName();
     }
 
     @OktopusCacheTtl(TimeUnit.SECONDS)
-    public long cacheTtl(@OktopusResponseBody GetToken.TokenResponse tokenResponse) {
+    public long cacheTtl(@OktopusResponseBody ResponseBody tokenResponse) {
         return tokenResponse.ttlInSeconds;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static final class TokenRequest {
+    public static final class RequestBody {
 
         private String userName;
         private String password;
-
-        @Override
-        public String toString() {
-            return "TokenRequest{" +
-                    "userName='" + userName + '\'' +
-                    ", password='" + password + '\'' +
-                    '}';
-        }
 
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static final class TokenResponse {
+    public static final class ResponseBody {
 
-        private String token;
+        private String accessToken;
         private long ttlInSeconds;
-
-        @Override
-        public String toString() {
-            return "TokenResponse{" +
-                    "token='" + token + '\'' +
-                    ", ttlInSeconds=" + ttlInSeconds +
-                    '}';
-        }
 
     }
 
