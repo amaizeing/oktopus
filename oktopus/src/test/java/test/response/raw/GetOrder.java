@@ -1,9 +1,9 @@
 package test.response.raw;
 
-import com.amaizeing.oktopus.annotation.OktopusDependOn;
-import com.amaizeing.oktopus.annotation.OktopusRequestHeader;
-import com.amaizeing.oktopus.annotation.OktopusRequestUrl;
-import com.amaizeing.oktopus.annotation.method.GetRequest;
+import io.github.amaizeing.oktopus.annotation.OktopusDependOn;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestHeader;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestUrl;
+import io.github.amaizeing.oktopus.annotation.method.Get;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,29 +11,32 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.Map;
 
-@GetRequest(responseType = GetOrder.OrderResponse.class)
+@Get(onSuccess = GetOrder.Response.class)
 public class GetOrder {
 
     @OktopusDependOn(GetToken.class)
-    private GetToken.TokenResponse tokenResponse;
+    private GetToken.ResponseBody token;
 
     @OktopusRequestUrl
-    public String url(int orderId) {
-        return "http://localhost:9090/orders/" + orderId;
+    public String url(String url) {
+        return url;
     }
 
     @OktopusRequestHeader
-    public Map<String, String> initHeader() {
-        return Map.of("x-token", tokenResponse.getToken());
+    public Map<String, String> initHeader(String requestId) {
+        return Map.of("Authorization", "Bearer " + token.getAccessToken(),
+                      "X-Request-Id", requestId);
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static final class OrderResponse {
+    public static final class Response {
 
-        private long orderId;
+        private long id;
+        private String status;
         private List<Long> orderDetailIds;
+        private List<Long> shipmentIds;
 
     }
 

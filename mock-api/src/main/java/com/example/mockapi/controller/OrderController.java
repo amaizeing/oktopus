@@ -79,6 +79,9 @@ public class OrderController {
     }
 
     private TokenResponse doLogin(UserInfo userInfo) {
+        if (userInfo.getUserName().equals("invalid")) {
+            throw new IllegalArgumentException();
+        }
         final var token = userInfo.getUserName() + ":" + userInfo.getPassword();
         tokenToUser.put(token, userInfo.getUserName());
         return new TokenResponse(userInfo.getUserName() + ":" + userInfo.getPassword(), 60);

@@ -4,14 +4,13 @@ import io.github.amaizeing.oktopus.annotation.OktopusDependOn;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestHeader;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestUrls;
 import io.github.amaizeing.oktopus.annotation.method.Get;
-import lombok.Data;
 
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Get(onSuccess = GetOrderDetail.Response.class)
-public class GetOrderDetail {
+@Get(onSuccess = GetOrderShipment.Response.class)
+public class GetOrderShipment {
 
     @OktopusDependOn(GetToken.class)
     private GetToken.ResponseBody tokenResponse;
@@ -33,13 +32,12 @@ public class GetOrderDetail {
                       "X-Request-Id", requestId);
     }
 
-    @Data
     public static final class Response {
 
         private long id;
-        private String name;
-        private int quantity;
-        private String description;
+        private String driverName;
+        private String licensePlate;
+        private String phoneNumber;
 
     }
 

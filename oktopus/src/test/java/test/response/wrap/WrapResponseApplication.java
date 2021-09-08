@@ -1,8 +1,8 @@
 package test.response.wrap;
 
-import com.amaizeing.oktopus.Oktopus;
-import com.amaizeing.oktopus.OktopusFlow;
-import com.amaizeing.oktopus.OktopusRequest;
+import io.github.amaizeing.oktopus.Oktopus;
+import io.github.amaizeing.oktopus.OktopusFlow;
+import io.github.amaizeing.oktopus.OktopusRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +18,8 @@ public class WrapResponseApplication {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
 
         Oktopus.load();
-
         var flow = getOrderDetailFlow();
-        async(flow);
+        run(flow);
     }
 
     static OktopusFlow getOrderDetailFlow() {
@@ -31,38 +30,37 @@ public class WrapResponseApplication {
 //                .build();
 
         var tokenRequest = OktopusRequest.on(GetToken.class)
-                .requestBodyArgs("dat.bui", "123")
+                .requestBodyArgs("datbui", "123")
                 .onServerError((request, response) -> {
-                    LOGGER.error("Exception", response.getException());
+                    final Map<String, Object> responseBody = response.getBody();
+                    LOGGER.error("Fail to request token with user: {}. Code: {}. Message: {}",
+                                 "invalid",
+                                 response.getHttpStatusCode(),
+                                 responseBody.get("error"));
                 });
 
-        var orderRequest = OktopusRequest.on(GetOrder.class).urlArgs(1);
-        var orderDetailRequest = OktopusRequest.on(GetOrderDetail.class);
+        var orderRequest = OktopusRequest.on(GetOrder.class)
+                .urlArgs(1)
+                .onServerError((request, response) -> {
+                });
 
-        var getOrderDetailFlow = OktopusFlow.register();
-        getOrderDetailFlow.append(orderRequest);
-        getOrderDetailFlow.append(tokenRequest);
-        getOrderDetailFlow.append(orderDetailRequest);
-        return getOrderDetailFlow;
+        var orderDetailRequest = OktopusRequest.on(GetOrderDetail.class)
+                .onServerError((request, response) -> {
+                });
+
+        return OktopusFlow.register(tokenRequest, orderDetailRequest, orderRequest);
     }
 
-    static void async(OktopusFlow flow) throws ExecutionException, InterruptedException {
-        final var error = flow.async();
+    static void run(OktopusFlow flow) throws ExecutionException, InterruptedException {
+        final var error = flow.execute();
         System.out.println("finish async...");
-        error.get();
-
-        final GetToken.WrapTokenResponse tokenResponse = flow.getResponse(GetToken.class);
-        System.out.println(tokenResponse.getData().getToken());
-    }
-
-    static void sync(OktopusFlow flow) {
-        final var error = flow.sync();
-        if (error.isPresent()) {
-//            log.error("Error on executing flow with request: {}", error.get().getRequest(), error.get().getException());
+        var err = error.get();
+        if (err.isPresent()) {
+            LOGGER.error("EXCEPTION", err.get().getException());
             return;
         }
 
-        final GetToken.WrapTokenResponse tokenResponse = flow.getResponse(GetToken.class);
+        final var tokenResponse = flow.getResponse(GetToken.class, GetToken.WrapTokenResponse.class);
         System.out.println(tokenResponse.getData().getToken());
 
         final GetOrder.WrapOrderResponse orderResponse = flow.getResponse(GetOrder.class);
@@ -74,7 +72,6 @@ public class WrapResponseApplication {
             final var response = v.getData();
             System.out.println(response.getOrderId() + " " + response.getOrderDetailId() + " " + response.getDescription());
         });
-
     }
 
 }

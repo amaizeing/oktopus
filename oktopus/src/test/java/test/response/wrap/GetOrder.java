@@ -1,9 +1,9 @@
 package test.response.wrap;
 
-import com.amaizeing.oktopus.annotation.OktopusDependOn;
-import com.amaizeing.oktopus.annotation.OktopusRequestHeader;
-import com.amaizeing.oktopus.annotation.OktopusRequestUrl;
-import com.amaizeing.oktopus.annotation.method.GetRequest;
+import io.github.amaizeing.oktopus.annotation.OktopusDependOn;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestHeader;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestUrl;
+import io.github.amaizeing.oktopus.annotation.method.Get;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.Map;
 
-@GetRequest(responseType = GetOrder.WrapOrderResponse.class)
+@Get(onSuccess = GetOrder.WrapOrderResponse.class)
 public class GetOrder {
 
     @OktopusDependOn(GetToken.class)
