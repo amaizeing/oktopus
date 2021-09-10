@@ -15,12 +15,21 @@ import java.util.UUID;
 @Slf4j
 public class TestApplication {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         Oktopus.load();
 
         test();
 
+        System.out.println("------------- round 2-------------");
+        test();
+
+        Thread.sleep(8000);
+        System.out.println("------------- round 3-------------");
+        test();
+        Thread.sleep(2000);
+        System.out.println("------------- round 4-------------");
+        test();
     }
 
     @SneakyThrows
@@ -56,7 +65,7 @@ public class TestApplication {
             return;
         }
 
-        final var tokenResponse = flow.getResponse(GetToken.class, GetToken.ResponseBody.class);
+        final var tokenResponse = flow.getResponse(GetToken.class, GetToken.Response.class);
         log.info("Token response: {}", tokenResponse);
 
         final GetOrder.Response orderResponse = flow.getResponse(GetOrder.class);
@@ -65,8 +74,9 @@ public class TestApplication {
         final Map<Long, GetOrderDetail.Response> orderDetailResponses = flow.getResponse(GetOrderDetail.class);
         orderDetailResponses.forEach((orderDetailId, response) -> log.info("Order detail response: {}", response));
 
-        final Map<Long, GetOrderDetail.Response> shipmentResponses = flow.getResponse(GetOrderShipment.class);
+        final Map<Long, GetOrderShipment.Response> shipmentResponses = flow.getResponse(GetOrderShipment.class);
         shipmentResponses.forEach((shipmentId, response) -> log.info("Shipment response: {}", response));
+
     }
 
     static void testLayerDependence() {

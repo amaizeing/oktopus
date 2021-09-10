@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -37,9 +38,9 @@ public class GetToken {
         return tokenRequest.getUserName();
     }
 
-    @OktopusCacheTtl(TimeUnit.SECONDS)
-    public long cacheTtl(@OktopusResponseBody WrapTokenResponse tokenResponse) {
-        return tokenResponse.getData().getTtlInSeconds();
+    @OktopusCacheTtl
+    public Duration cacheTtl(@OktopusResponseBody WrapTokenResponse tokenResponse) {
+        return Duration.ofSeconds(tokenResponse.getData().getTtlInSeconds());
     }
 
     public static final class WrapTokenResponse extends ResponseMessage<TokenResponse> {

@@ -4,13 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderDetailInfo {
+public class OrderResponse {
 
-    private long orderId;
-    private long orderDetailId;
-    private String description;
+    private long id;
+    private String status;
+    private List<Long> shipmentIds;
+    private List<Long> orderDetailIds;
 
 }

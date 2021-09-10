@@ -73,9 +73,10 @@ public final class OktopusFlow {
 
     public Future<Optional<RequestError>> execute() {
         buildRequestsLayers();
+        final var states = Set.of(FlowState.State.READY, FlowState.State.COMPLETED, FlowState.State.ERROR);
         synchronized (lock) {
-            if (!state.isReady()) {
-                throw new IllegalStateException("Flow state must be " + FlowState.State.READY + " for running");
+            if (!states.contains(state.getState())) {
+                throw new IllegalStateException("Flow state must be in 1 of " + states + " to execute");
             }
             state.running();
         }

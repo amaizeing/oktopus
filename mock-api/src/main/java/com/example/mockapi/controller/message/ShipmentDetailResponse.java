@@ -4,14 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderInfo {
+public class ShipmentDetailResponse {
 
-    private long orderId;
-    private List<Long> orderDetailIds;
+    private long id;
+    private String driverName;
+    private String phoneNumber;
+    private String licensePlate;
 
 }

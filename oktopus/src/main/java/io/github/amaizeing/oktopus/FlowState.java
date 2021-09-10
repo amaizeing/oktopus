@@ -44,6 +44,10 @@ class FlowState {
         return state == State.ERROR;
     }
 
+    State getState() {
+        return state;
+    }
+
     enum State {
         INITIATE, BUILDING, READY, RUNNING, ERROR, COMPLETED
     }

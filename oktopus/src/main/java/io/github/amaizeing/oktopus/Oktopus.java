@@ -1,14 +1,13 @@
 package io.github.amaizeing.oktopus;
 
 import io.github.amaizeing.oktopus.annotation.OktopusCacheKey;
-import io.github.amaizeing.oktopus.annotation.OktopusCacheKeys;
 import io.github.amaizeing.oktopus.annotation.OktopusCacheTtl;
-import io.github.amaizeing.oktopus.annotation.OktopusCacheTtls;
 import io.github.amaizeing.oktopus.annotation.OktopusDependOn;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestBodies;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestBody;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestHeader;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestHeaders;
+import io.github.amaizeing.oktopus.annotation.OktopusRequestKey;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestUrl;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestUrls;
 import io.github.amaizeing.oktopus.annotation.OktopusResponseBody;
@@ -29,6 +28,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,9 +60,7 @@ public final class Oktopus {
                      OktopusRequestBody.class, Set.of(),
                      OktopusRequestBodies.class, Set.of(Map.class),
                      OktopusCacheKey.class, Set.of(String.class),
-                     OktopusCacheKeys.class, Set.of(Map.class),
-                     OktopusCacheTtl.class, Set.of(Long.class, long.class, Integer.class, int.class, Short.class, short.class),
-                     OktopusCacheTtls.class, Set.of(Map.class));
+                     OktopusCacheTtl.class, Set.of(Duration.class, Long.class, long.class, Integer.class, int.class, Short.class, short.class));
 
     private Oktopus() {
     }
@@ -138,12 +136,31 @@ public final class Oktopus {
                 }
                 validateRequestMethod(annotationToMethod, request.getName());
                 getInstance().requestClassToMethods.put(request, annotationToMethod);
+
+                var singleUrl = annotationToMethod.containsKey(OktopusRequestUrl.class);
+
+                var typeHeader = RequestArg.NONE;
+                if (annotationToMethod.containsKey(OktopusRequestHeader.class)) {
+                    typeHeader = RequestArg.SINGLE;
+                } else if (annotationToMethod.containsKey(OktopusRequestHeaders.class)) {
+                    typeHeader = RequestArg.MULTIPLE;
+                }
+
+                var typeRequestBody = RequestArg.NONE;
+                if (annotationToMethod.containsKey(OktopusRequestBody.class)) {
+                    typeRequestBody = RequestArg.SINGLE;
+                } else if (annotationToMethod.containsKey(OktopusRequestBodies.class)) {
+                    typeRequestBody = RequestArg.MULTIPLE;
+                }
+
                 final var requestInstance = RequestInstance.builder()
                         .requestClass(request)
                         .responseTypeOnSuccess(responseTypes.getLeft())
                         .responseTypeOnFailure(responseTypes.getRight())
                         .httpMethod(httpMethod)
-                        .singleUrl(annotationToMethod.containsKey(OktopusRequestUrl.class))
+                        .typeUrl(singleUrl ? RequestArg.SINGLE : RequestArg.MULTIPLE)
+                        .typeHeader(typeHeader)
+                        .typeRequestBody(typeRequestBody)
                         .build();
                 getInstance().requestClassToRequestInfo.put(request, requestInstance);
             }
@@ -182,7 +199,7 @@ public final class Oktopus {
             }
             final var fieldType = field.getType();
             final var dependOnRequestInstance = INSTANCE.requestClassToRequestInfo.get(dependOnRequest);
-            if (dependOnRequestInstance.isSingleUrl()) {
+            if (dependOnRequestInstance.getTypeUrl().isSingle()) {
                 final var dependOnResponseType = INSTANCE.requestClassToRequestInfo.get(dependOnRequest).getResponseTypeOnSuccess();
                 if (!fieldType.isAssignableFrom(dependOnResponseType)) {
                     throw new OktopusAnnotationException("Field: " + field.getName() + " of request: " + request.getName()
@@ -219,16 +236,7 @@ public final class Oktopus {
             throw new OktopusAnnotationException("Only accept 1 @" + OktopusRequestUrl.class.getSimpleName() +
                                                          " or @" + OktopusRequestUrls.class.getSimpleName() + " in request: " + requestClass);
         }
-        var containTtl = annotationToMethod.containsKey(OktopusCacheTtl.class) ? 1 : 0;
-        var containCacheKey = annotationToMethod.containsKey(OktopusCacheKey.class) ? 1 : 0;
-        var containCacheKeys = annotationToMethod.containsKey(OktopusCacheKeys.class) ? 1 : 0;
-        if (((containCacheKey | containCacheKeys) == 0) && containTtl != 0) {
-            throw new OktopusAnnotationException("Missing @" + OktopusCacheKey.class.getSimpleName() +
-                                                         " or @" + OktopusCacheKeys.class.getSimpleName() + " in request: " + requestClass);
-        }
-        if (((url == 1 && containCacheKey == 0) || (urls == 1 && containCacheKeys == 0)) && containTtl != 0) {
-            throw new OktopusAnnotationException("Ambiguous between single or multiple request because of cacheKeys in request: " + requestClass);
-        }
+
         var header = annotationToMethod.containsKey(OktopusRequestHeader.class);
         var headers = annotationToMethod.containsKey(OktopusRequestHeaders.class);
         if (header && headers) {
@@ -247,15 +255,12 @@ public final class Oktopus {
         if (requestBodies && url == 1) {
             throw new OktopusAnnotationException("Ambiguous between single or multiple request because of requestBodies in request: " + requestClass);
         }
-        if ((containCacheKey & containCacheKeys) == 1) {
-            throw new OktopusAnnotationException("Only accept 1 @" + OktopusCacheKey.class.getSimpleName() +
-                                                         " or @" + OktopusCacheKeys.class.getSimpleName() + " in request: " + requestClass);
-        }
-        if (containCacheKey == 1 && containTtl == 0) {
-            throw new OktopusAnnotationException("Missing @" + OktopusCacheTtl.class.getSimpleName() + " in request: " + requestClass);
-        }
-        if (containCacheKeys == 1 && containTtl == 0) {
-            throw new OktopusAnnotationException("Missing @" + OktopusCacheTtl.class.getSimpleName() + " in request: " + requestClass);
+
+        var containTtl = annotationToMethod.containsKey(OktopusCacheTtl.class);
+        var containCacheKey = annotationToMethod.containsKey(OktopusCacheKey.class);
+        if (Boolean.logicalXor(containTtl, containCacheKey)) {
+            throw new OktopusAnnotationException("Missing @" + OktopusCacheTtl.class.getSimpleName()
+                                                         + " or @" + OktopusCacheKey.class + " in request: " + requestClass);
         }
     }
 
@@ -280,6 +285,7 @@ public final class Oktopus {
                             }
                             final T cacheResponse = RequestCache.get(cacheKey);
                             if (cacheResponse != null) {
+                                LOGGER.debug("Get response of request: {} in cache", oktopusRequest.getRequestClass());
                                 return cacheResponse;
                             }
                             final Response<T> response = syncRequest(requestInfo);
@@ -291,16 +297,18 @@ public final class Oktopus {
                             annotationToValue.put(OktopusRequestUrl.class, requestInfo.getUrl());
                             annotationToValue.put(OktopusRequestUrls.class, requestInfo.getUrls());
                             annotationToValue.put(OktopusRequestHeader.class, requestInfo.getHeader());
+                            annotationToValue.put(OktopusRequestHeaders.class, requestInfo.getHeaders());
                             annotationToValue.put(OktopusRequestBody.class, requestInfo.getBody());
+                            annotationToValue.put(OktopusRequestBodies.class, requestInfo.getBodies());
                             annotationToValue.put(OktopusResponseBody.class, response.getData());
+                            annotationToValue.put(OktopusRequestKey.class, requestInfo.getRequestKey());
                             final var cacheTtlMethod = requestInfo.getCacheTtlMethod();
                             if (cacheTtlMethod == null) {
                                 return response;
                             }
                             var cacheTtlArgs = getMethodArgs(cacheTtlMethod, annotationToValue);
                             final var ttl = cacheTtlMethod.invoke(requestInfo.getRequestInstance(), cacheTtlArgs);
-                            final var timeUnit = cacheTtlMethod.getAnnotation(OktopusCacheTtl.class).value();
-                            RequestCache.put(cacheKey, response, ttl, timeUnit);
+                            RequestCache.put(cacheKey, response, (Duration) ttl);
                             return response;
                         } catch (Exception ex) {
                             return new Response<T>().setException(ex);
@@ -341,9 +349,9 @@ public final class Oktopus {
     @SuppressWarnings("unchecked")
     private static <T> Response<T> syncRequest(final RequestInfo requestInfo) {
         try {
-            LOGGER.debug("Sending request to: {} with body: {}", requestInfo.getUrl(), requestInfo.getBody());
+            LOGGER.debug("Sending request to: {} with body: {} and header: {}", requestInfo.getUrl(), requestInfo.getBody(), requestInfo.getHeader());
             final var responseInfo = getInstance().restClient.sync(requestInfo);
-            LOGGER.debug("Receive response from: {}", requestInfo.getUrl());
+            LOGGER.debug("Receiving response from: {} with body: {} and headers: {}", requestInfo.getUrl(), responseInfo.getBody(), responseInfo.getHeaders());
             return new Response<T>()
                     .setData(responseInfo.getBody())
                     .setException(responseInfo.getException())
@@ -399,41 +407,76 @@ public final class Oktopus {
 
         final Object url;
         final Method urlMethod;
-        if (requestInstance.isSingleUrl()) {
+        if (requestInstance.getTypeUrl() == RequestArg.SINGLE) {
             urlMethod = methods.get(OktopusRequestUrl.class);
         } else {
             urlMethod = methods.get(OktopusRequestUrls.class);
         }
         url = urlMethod.invoke(instance, request.getUrlArgs());
 
-        final var headersMethod = methods.get(OktopusRequestHeader.class);
-        final var headers = headersMethod == null ? null : headersMethod.invoke(instance, request.getHeadersArgs());
-        final var requestBodyMethod = methods.get(OktopusRequestBody.class);
-        final var body = requestBodyMethod == null ? null : requestBodyMethod.invoke(instance, request.getBodyArgs());
-        final var cacheKeyMethod = requestInstance.isSingleUrl() ? methods.get(OktopusCacheKey.class) : methods.get(OktopusCacheKeys.class);
-        final Object cacheKey;
-        if (cacheKeyMethod != null) {
-            final var annotationToValue = new HashMap<Class<? extends Annotation>, Object>();
-            if (requestInstance.isSingleUrl()) {
-                annotationToValue.put(OktopusRequestUrl.class, url);
-            } else {
-                annotationToValue.put(OktopusRequestUrls.class, url);
-            }
-            annotationToValue.put(OktopusRequestHeader.class, headers);
-            annotationToValue.put(OktopusRequestBody.class, body);
-            var cacheKeyArgs = getMethodArgs(cacheKeyMethod, annotationToValue);
-            cacheKey = cacheKeyMethod.invoke(instance, cacheKeyArgs);
-        } else {
-            cacheKey = null;
+        final Method headersMethod;
+        switch (requestInstance.getTypeHeader()) {
+            case SINGLE:
+                headersMethod = methods.get(OktopusRequestHeader.class);
+                break;
+            case MULTIPLE:
+                headersMethod = methods.get(OktopusRequestHeaders.class);
+                break;
+            case NONE:
+            default:
+                headersMethod = null;
+                break;
         }
-        if (requestInstance.isSingleUrl()) {
+        final var header = headersMethod == null ? null : headersMethod.invoke(instance, request.getHeadersArgs());
+
+        final Method requestBodyMethod;
+        switch (requestInstance.getTypeRequestBody()) {
+            case SINGLE:
+                requestBodyMethod = methods.get(OktopusRequestBody.class);
+                break;
+            case MULTIPLE:
+                requestBodyMethod = methods.get(OktopusRequestBodies.class);
+                break;
+            case NONE:
+            default:
+                requestBodyMethod = null;
+                break;
+        }
+        final var body = requestBodyMethod == null ? null : requestBodyMethod.invoke(instance, request.getBodyArgs());
+
+        final var cacheKeyMethod = methods.get(OktopusCacheKey.class);
+        final var annotationToValue = new HashMap<Class<? extends Annotation>, Object>();
+        if (requestInstance.getTypeUrl().isSingle()) {
+            annotationToValue.put(OktopusRequestUrl.class, url);
+        } else {
+            annotationToValue.put(OktopusRequestUrls.class, url);
+        }
+        if (requestInstance.getTypeHeader().isSingle()) {
+            annotationToValue.put(OktopusRequestHeader.class, header);
+        } else {
+            annotationToValue.put(OktopusRequestHeaders.class, header);
+        }
+        if (requestInstance.getTypeRequestBody().isSingle()) {
+            annotationToValue.put(OktopusRequestBody.class, body);
+        } else {
+            annotationToValue.put(OktopusRequestBodies.class, body);
+        }
+
+        if (requestInstance.typeUrl.isSingle()) {
+            final Object cacheKey;
+            if (cacheKeyMethod != null) {
+                var cacheKeyArgs = getMethodArgs(cacheKeyMethod, annotationToValue);
+                cacheKey = cacheKeyMethod.invoke(instance, cacheKeyArgs);
+            } else {
+                cacheKey = null;
+            }
             final var requestInfo = new RequestInfo().setUrl((String) url)
                     .setErrorHandler(request.getErrorHandler())
 //                    .setTimeout(request.getTimeout())
 //                    .setRetryConfig(request.getRetryConfig())
                     .setRequestInstance(instance)
                     .setBody(body)
-                    .setHeader((Map<String, Object>) headers)
+                    .setHeader((Map<String, Object>) header)
                     .setMethod(requestInstance.getHttpMethod())
                     .setResponseTypeOnSuccess(requestInstance.getResponseTypeOnSuccess())
                     .setResponseTypeOnFailure(requestInstance.getResponseTypeOnFailure())
@@ -441,21 +484,54 @@ public final class Oktopus {
                     .setCacheTtlMethod(methods.get(OktopusCacheTtl.class));
             return Pair.of(true, Map.of(url, requestInfo));
         }
-        final var cacheKeys = (Map<?, String>) cacheKey;
-        final var requestInfoMap = ((Map<?, String>) url).entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey,
-                                          e -> new RequestInfo().setUrl(e.getValue())
-//                                                  .setTimeout(request.getTimeout())
-//                                                  .setRetryConfig(request.getRetryConfig())
-                                                  .setErrorHandler(request.getErrorHandler())
-                                                  .setRequestInstance(instance)
-                                                  .setBody(body)
-                                                  .setHeader((Map<String, Object>) headers)
-                                                  .setMethod(requestInstance.getHttpMethod())
-                                                  .setResponseTypeOnSuccess(requestInstance.getResponseTypeOnSuccess())
-                                                  .setResponseTypeOnFailure(requestInstance.getResponseTypeOnFailure())
-                                                  .setCacheKey(cacheKeys == null ? null : cacheKeys.get(e.getKey()))
-                                                  .setCacheTtlMethod(methods.get(OktopusCacheTtl.class))));
+
+        final var requestInfoMap = ((Map<?, String>) url)
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> {
+                    final Object cacheKey;
+
+                    var localHeader = header;
+                    var localBody = body;
+                    if (cacheKeyMethod != null) {
+                        annotationToValue.put(OktopusRequestKey.class, e.getKey());
+                        annotationToValue.put(OktopusRequestUrl.class, e.getValue());
+                        if (header != null && requestInstance.getTypeHeader().isMultiple()) {
+                            localHeader = ((Map<?, Object>) header).get(e.getKey());
+                            annotationToValue.put(OktopusRequestHeader.class, localHeader);
+                        }
+                        if (body != null && requestInstance.getTypeRequestBody().isMultiple()) {
+                            localBody = ((Map<?, Object>) body).get(e.getKey());
+                            annotationToValue.put(OktopusRequestBody.class, localBody);
+                        }
+                        var cacheKeyArgs = getMethodArgs(cacheKeyMethod, annotationToValue);
+                        try {
+                            cacheKey = cacheKeyMethod.invoke(instance, cacheKeyArgs);
+                        } catch (Exception ex) {
+                            throw new OktopusAnnotationException(ex);
+                        }
+                    } else {
+                        cacheKey = null;
+                    }
+
+                    return new RequestInfo()
+                            .setRequestKey(e.getKey())
+                            .setUrl(e.getValue())
+                            .setUrls(((Map<?, String>) url))
+                            //.setTimeout(request.getTimeout())
+                            //.setRetryConfig(request.getRetryConfig())
+                            .setErrorHandler(request.getErrorHandler())
+                            .setRequestInstance(instance)
+                            .setBody(localBody)
+                            .setBodies(requestInstance.getTypeRequestBody().isMultiple() ? (Map<?, Object>) body : null)
+                            .setHeader((Map<String, Object>) localHeader)
+                            .setHeaders(requestInstance.getTypeHeader().isMultiple() ? (Map<?, Map<String, Object>>) header : null)
+                            .setMethod(requestInstance.getHttpMethod())
+                            .setResponseTypeOnSuccess(requestInstance.getResponseTypeOnSuccess())
+                            .setResponseTypeOnFailure(requestInstance.getResponseTypeOnFailure())
+                            .setCacheKey(cacheKey)
+                            .setCacheTtlMethod(methods.get(OktopusCacheTtl.class));
+                }));
         return Pair.of(false, requestInfoMap);
     }
 
@@ -467,8 +543,22 @@ public final class Oktopus {
         private final Class<?> responseTypeOnSuccess;
         private final Class<?> responseTypeOnFailure;
         private final HttpMethod httpMethod;
-        private final boolean singleUrl;
+        private final RequestArg typeUrl;
+        private final RequestArg typeHeader;
+        private final RequestArg typeRequestBody;
 
+    }
+
+    private enum RequestArg {
+        NONE, SINGLE, MULTIPLE;
+
+        boolean isSingle() {
+            return this == SINGLE;
+        }
+
+        boolean isMultiple() {
+            return this == MULTIPLE;
+        }
     }
 
 }

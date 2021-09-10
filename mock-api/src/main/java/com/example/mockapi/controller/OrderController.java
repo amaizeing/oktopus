@@ -1,10 +1,11 @@
 package com.example.mockapi.controller;
 
-import com.example.mockapi.controller.message.OrderDetailInfo;
-import com.example.mockapi.controller.message.OrderInfo;
+import com.example.mockapi.controller.message.OrderDetailResponse;
+import com.example.mockapi.controller.message.OrderResponse;
 import com.example.mockapi.controller.message.ResponseMessage;
+import com.example.mockapi.controller.message.ShipmentDetailResponse;
+import com.example.mockapi.controller.message.TokenRequest;
 import com.example.mockapi.controller.message.TokenResponse;
-import com.example.mockapi.controller.message.UserInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -27,19 +28,19 @@ public class OrderController {
     private final Map<String, String> tokenToUser = new HashMap<>();
 
     @PostMapping("/login")
-    public ResponseEntity<Object> login(@RequestBody UserInfo userInfo) {
+    public ResponseEntity<Object> login(@RequestBody TokenRequest userInfo) {
         LOGGER.info("Receive login request");
         return ResponseEntity.ok(doLogin(userInfo));
     }
 
     @PostMapping("/wrap/login")
-    public ResponseEntity<Object> wrapLogin(@RequestBody UserInfo userInfo) {
+    public ResponseEntity<Object> wrapLogin(@RequestBody TokenRequest userInfo) {
         LOGGER.info("Receive login request");
         return ResponseEntity.ok(new ResponseMessage<>(doLogin(userInfo), "ok", null));
     }
 
     @GetMapping("/orders/{orderId}")
-    public ResponseEntity<Object> orderInfo(@PathVariable long orderId, @RequestHeader("x-token") String token) {
+    public ResponseEntity<Object> orderInfo(@PathVariable long orderId, @RequestHeader("Authorization") String token) {
         LOGGER.info("Receive order request");
         final var orderInfo = getOrder(orderId, token);
         if (orderInfo == null) {
@@ -49,7 +50,7 @@ public class OrderController {
     }
 
     @GetMapping("/wrap/orders/{orderId}")
-    public ResponseEntity<Object> wrapOrderInfo(@PathVariable long orderId, @RequestHeader("x-token") String token) {
+    public ResponseEntity<Object> wrapOrderInfo(@PathVariable long orderId, @RequestHeader("Authorization") String token) {
         LOGGER.info("Receive order request");
         final var orderInfo = getOrder(orderId, token);
         if (orderInfo == null) {
@@ -58,27 +59,47 @@ public class OrderController {
         return ResponseEntity.ok(new ResponseMessage<>(orderInfo, "ok", null));
     }
 
-    @GetMapping("/orders/{orderId}/details/{orderDetailId}")
-    public ResponseEntity<Object> orderDetailInfo(@PathVariable long orderId, @PathVariable long orderDetailId, @RequestHeader("x-token") String token) {
+    @GetMapping("/order-details/{orderDetailId}")
+    public ResponseEntity<Object> orderDetailInfo(@PathVariable long orderDetailId, @RequestHeader("Authorization") String token) {
         LOGGER.info("Receive order detail request");
-        final var orderDetail = getOrderDetail(orderId, orderDetailId, token);
+        final var orderDetail = getOrderDetail(orderDetailId, token);
         if (orderDetail == null) {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(orderDetail);
     }
 
-    @GetMapping("/wrap/orders/{orderId}/details/{orderDetailId}")
-    public ResponseEntity<Object> wrapOrderDetailInfo(@PathVariable long orderId, @PathVariable long orderDetailId, @RequestHeader("x-token") String token) {
+    @GetMapping("/wrap/order-details/{orderDetailId}")
+    public ResponseEntity<Object> wrapOrderDetailInfo(@PathVariable long orderDetailId, @RequestHeader("Authorization") String token) {
         LOGGER.info("Receive order detail request");
-        final var orderDetail = getOrderDetail(orderId, orderDetailId, token);
+        final var orderDetail = getOrderDetail(orderDetailId, token);
         if (orderDetail == null) {
             return ResponseEntity.badRequest().body(new ResponseMessage<>(null, "invalid order detail id", null));
         }
         return ResponseEntity.ok(new ResponseMessage<>(orderDetail, "ok", null));
     }
 
-    private TokenResponse doLogin(UserInfo userInfo) {
+    @GetMapping("/shipments/{shipmentId}")
+    public ResponseEntity<Object> shipmentInfo(@PathVariable long shipmentId, @RequestHeader("Authorization") String token) {
+        LOGGER.info("Receive shipment request");
+        final var shipment = getShipment(shipmentId, token);
+        if (shipment == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(shipment);
+    }
+
+    @GetMapping("/wrap/shipments/{shipmentId}")
+    public ResponseEntity<Object> wrapShipmentInfo(@PathVariable long shipmentId, @RequestHeader("Authorization") String token) {
+        LOGGER.info("Receive shipment request");
+        final var shipment = getShipment(shipmentId, token);
+        if (shipment == null) {
+            return ResponseEntity.badRequest().body(new ResponseMessage<>(null, "invalid", null));
+        }
+        return ResponseEntity.ok(new ResponseMessage<>(shipment, "ok", null));
+    }
+
+    private TokenResponse doLogin(TokenRequest userInfo) {
         if (userInfo.getUserName().equals("invalid")) {
             throw new IllegalArgumentException();
         }
@@ -87,21 +108,28 @@ public class OrderController {
         return new TokenResponse(userInfo.getUserName() + ":" + userInfo.getPassword(), 60);
     }
 
-    private OrderInfo getOrder(long orderId, String token) {
+    private OrderResponse getOrder(long orderId, String token) {
         final var user = tokenToUser.get(token);
         if (user == null) {
             return null;
         }
-        return new OrderInfo(orderId, List.of(1L, 2L, 3L, 4L));
+        return new OrderResponse(orderId, "STATUS", List.of(1L, 2L, 3L, 4L), List.of(1L, 2L, 3L, 4L));
     }
 
-    private OrderDetailInfo getOrderDetail(long orderId, long orderDetailId, String token) {
+    private OrderDetailResponse getOrderDetail(long orderDetailId, String token) {
         final var user = tokenToUser.get(token);
         if (user == null) {
             return null;
         }
-        return new OrderDetailInfo(orderId, orderDetailId, "Order detail");
+        return new OrderDetailResponse(orderDetailId, "item name", 1, "Order detail");
     }
 
+    private ShipmentDetailResponse getShipment(long shipmentId, String token) {
+        final var user = tokenToUser.get(token);
+        if (user == null) {
+            return null;
+        }
+        return new ShipmentDetailResponse(shipmentId, "Jack", "0123", "432");
+    }
 
 }
