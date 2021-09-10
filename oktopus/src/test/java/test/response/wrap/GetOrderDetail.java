@@ -1,16 +1,14 @@
 package test.response.wrap;
 
-import io.github.amaizeing.oktopus.annotation.OktopusCacheKeys;
+import io.github.amaizeing.oktopus.annotation.OktopusCacheKey;
 import io.github.amaizeing.oktopus.annotation.OktopusCacheTtl;
 import io.github.amaizeing.oktopus.annotation.OktopusDependOn;
-import io.github.amaizeing.oktopus.annotation.OktopusRequestBodies;
-import io.github.amaizeing.oktopus.annotation.OktopusRequestBody;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestHeader;
-import io.github.amaizeing.oktopus.annotation.OktopusRequestHeaders;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestUrls;
 import io.github.amaizeing.oktopus.annotation.method.Get;
 import lombok.Data;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -39,14 +37,14 @@ public class GetOrderDetail {
                       "x-order-detail-id", 1);
     }
 
-    @OktopusCacheKeys
-    public Map<Long, String> cacheKeys() {
-        return urls();
+    @OktopusCacheKey
+    public String cacheKeys() {
+        return "";
     }
 
-    @OktopusCacheTtl(TimeUnit.MINUTES)
-    public int ttl() {
-        return 1;
+    @OktopusCacheTtl
+    public Duration ttl() {
+        return Duration.ofMinutes(1);
     }
 
     public static final class WrapOrderDetailResponse extends ResponseMessage<OrderDetailResponse> {

@@ -1,5 +1,6 @@
 package io.github.amaizeing.oktopus;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -9,6 +10,8 @@ class RequestCache {
     private static final RequestCache INSTANCE = new RequestCache();
 
     private final Map<Object, CacheResult> cache = new HashMap<>();
+
+    private static final float TTL_FACTOR = 0.9F;
 
     private RequestCache() {
     }
@@ -27,8 +30,8 @@ class RequestCache {
         return null;
     }
 
-    public static void put(Object key, Object value, Object ttl, TimeUnit unit) {
-        final var result = new CacheResult(value, Long.parseLong(ttl.toString()), unit);
+    public static void put(Object key, Object value, Duration ttl) {
+        final var result = new CacheResult(value, ttl);
         INSTANCE.cache.put(key, result);
     }
 
@@ -37,11 +40,9 @@ class RequestCache {
         private final Object value;
         private final long endTime;
 
-        public CacheResult(final Object value, final long ttl, final TimeUnit unit) {
+        public CacheResult(final Object value, Duration ttl) {
             this.value = value;
-            final var ttlInNano = unit.toNanos(ttl);
-            final var ttlInMs = TimeUnit.NANOSECONDS.toMillis(ttlInNano);
-            this.endTime = System.currentTimeMillis() + ttlInMs;
+            this.endTime = System.currentTimeMillis() + (long) (ttl.toMillis() * RequestCache.TTL_FACTOR);
         }
 
         private Object get() {

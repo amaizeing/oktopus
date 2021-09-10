@@ -13,12 +13,15 @@ import java.util.Map;
 @Accessors(chain = true)
 class RequestInfo {
 
+    private Object requestKey;
     private Object requestInstance;
     private HttpMethod method;
     private String url;
     private Map<?, String> urls;
     private Object body;
+    private Map<?, Object> bodies;
     private Map<String, Object> header;
+    private Map<?, Map<String, Object>> headers;
     private Class<?> responseTypeOnSuccess;
     private Class<?> responseTypeOnFailure;
     private Object cacheKey;

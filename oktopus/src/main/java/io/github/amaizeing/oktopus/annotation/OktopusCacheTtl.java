@@ -11,6 +11,4 @@ import java.util.concurrent.TimeUnit;
 @Target(value = {ElementType.METHOD})
 public @interface OktopusCacheTtl {
 
-    TimeUnit value() default TimeUnit.MILLISECONDS;
-
 }

@@ -180,6 +180,7 @@ public class GetToken {
 Now, get order will be depended on token request result. Just define a new variable with @DependOn.
 
 ```java
+
 @Get(onSuccess = GetOrder.Response.class)
 public class GetOrder {
 
@@ -216,15 +217,18 @@ public class GetOrder {
 
 Next step, define Get order detail request which depended on token response and order response.
 
-However, single order can include many order details. In this case, we can use annotation with singular or plural noun based on your need:
+However, single order can include many order details. In this case, we can use annotation with singular or plural noun
+based on your need:
+
 - **Endpoint**: @OktopusRequestUrl or @OktopusRequestUrls
 - **Request header**: @OktopusRequestHeader or @OktopusRequestHeaders
 - **Request body**: @OktopusRequestBody or @OktopusRequestBodies
 
-The response type of those methods with plural annotation is Map of key and result.
-In this case, request header of all requests are the same so we can use singular annotation with @OktopusRequestHeader. 
+The response type of those methods with plural annotation is Map of key and result. In this case, request header of all
+requests are the same so we can use singular annotation with @OktopusRequestHeader.
 
 ```java
+
 @Get(onSuccess = GetOrderDetail.Response.class)
 public class GetOrderDetail {
 
@@ -238,7 +242,7 @@ public class GetOrderDetail {
     public Map<Long, String> urls(String baseUrl) {
         final var orderDetailIds = orderResponse.getOrderDetailIds();
         return orderDetailIds.stream()
-                .collect(Collectors.toMap(Function.identity(), 
+                .collect(Collectors.toMap(Function.identity(),
                                           id -> baseUrl + orderResponse.getOrderId()));
     }
 
@@ -265,6 +269,7 @@ public class GetOrderDetail {
 Do the same thing with get order detail.
 
 ```java
+
 @Get(onSuccess = GetOrderShipment.Response.class)
 public class GetOrderShipment {
 
@@ -305,26 +310,26 @@ public class GetOrderShipment {
 Creating request flow and adding request into it, prepare to execute.
 
 ```java
-var requestId = UUID.randomUUID().toString();
+var requestId=UUID.randomUUID().toString();
 
-var tokenRequest = OktopusRequest.on(GetToken.class)
+        var tokenRequest=OktopusRequest.on(GetToken.class)
         .urlArgs("http://localhost:9090/login/")
         .headersArgs(requestId)
-        .requestBodyArgs("dat.bui", "123");
+        .requestBodyArgs("dat.bui","123");
 
-var orderRequest = OktopusRequest.on(GetOrder.class)
+        var orderRequest=OktopusRequest.on(GetOrder.class)
         .headersArgs(requestId)
         .urlArgs("http://localhost:9090/orders/1");
 
-var orderDetailRequest = OktopusRequest.on(GetOrderDetail.class)
+        var orderDetailRequest=OktopusRequest.on(GetOrderDetail.class)
         .headersArgs(requestId)
         .urlArgs("http://localhost:9090/order-details/");
 
-var orderShipmentRequest = OktopusRequest.on(GetOrderShipment.class)
+        var orderShipmentRequest=OktopusRequest.on(GetOrderShipment.class)
         .headersArgs(requestId)
         .urlArgs("http://localhost:9090/shipments/");
 
-var flow = OktopusFlow.register()
+        var flow=OktopusFlow.register()
         .append(tokenRequest)
         .append(orderRequest)
         .append(orderDetailRequest)
@@ -332,21 +337,25 @@ var flow = OktopusFlow.register()
 ```
 
 **Oktopus** will base on your defined request to build the request layer. With this example, we can have 3 layers:
+
 - Layer 1: request token.
 - Layer 2: request order.
 - Layer 3: request order detail and shipment info.
 
-**Note**: 
+**Note**:
+
 - Requests in next layer will be executed after prev layer completed.
 - Requests in single layer will be executed in parallel.
 - If any request get error, the flow will try to stop executing.
+
+![](https://i.imgur.com/82drUBf.png)
 
 ### 6. Run flow
 
 Flow is async. The result of execute() is future error.
 
 ```java
-Future<Optional<RequestError>> err = flow.execute();
+Future<Optional<RequestError>>err=flow.execute();
 ```
 
 ### 7. Get response
@@ -354,23 +363,23 @@ Future<Optional<RequestError>> err = flow.execute();
 Finally, after executing without any error, we need to get response to aggregate the result before responding to client.
 
 ```java
-Optinal<RequestError> flowErr = err.get();
-if (err.isPresent()) {
-    log.error("Error on executing flow with request: {}", error.get().get().getRequest(), error.get().get().getException());
-    return;
-}
+Optinal<RequestError> flowErr=err.get();
+        if(err.isPresent()){
+        log.error("Error on executing flow with request: {}",error.get().get().getRequest(),error.get().get().getException());
+        return;
+        }
 
-final var tokenResponse = flow.getResponse(GetToken.class, GetToken.ResponseBody.class);
-        log.info("Token response: {}", tokenResponse);
+final var tokenResponse=flow.getResponse(GetToken.class,GetToken.ResponseBody.class);
+        log.info("Token response: {}",tokenResponse);
 
-final GetOrder.Response orderResponse = flow.getResponse(GetOrder.class);
-        log.info("Order response: {}", orderResponse);
+final GetOrder.Response orderResponse=flow.getResponse(GetOrder.class);
+        log.info("Order response: {}",orderResponse);
 
-final Map<Long, GetOrderDetail.Response> orderDetailResponses = flow.getResponse(GetOrderDetail.class);
-        orderDetailResponses.forEach((orderDetailId, response) -> log.info("Order detail response: {}", response));
+final Map<Long, GetOrderDetail.Response>orderDetailResponses=flow.getResponse(GetOrderDetail.class);
+        orderDetailResponses.forEach((orderDetailId,response)->log.info("Order detail response: {}",response));
 
-final Map<Long, GetOrderDetail.Response> shipmentResponses = flow.getResponse(GetOrderShipment.class);
-        shipmentResponses.forEach((shipmentId, response) -> log.info("Shipment response: {}", response));
+final Map<Long, GetOrderDetail.Response>shipmentResponses=flow.getResponse(GetOrderShipment.class);
+        shipmentResponses.forEach((shipmentId,response)->log.info("Shipment response: {}",response));
 ```
 
 Finally, build the response based on business logic.

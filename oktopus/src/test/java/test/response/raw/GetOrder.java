@@ -15,7 +15,7 @@ import java.util.Map;
 public class GetOrder {
 
     @OktopusDependOn(GetToken.class)
-    private GetToken.ResponseBody token;
+    private GetToken.Response token;
 
     @OktopusRequestUrl
     public String url(String url) {
@@ -24,7 +24,7 @@ public class GetOrder {
 
     @OktopusRequestHeader
     public Map<String, String> initHeader(String requestId) {
-        return Map.of("Authorization", "Bearer " + token.getAccessToken(),
+        return Map.of("Authorization", token.getToken(),
                       "X-Request-Id", requestId);
     }
 
