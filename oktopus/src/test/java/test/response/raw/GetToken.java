@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Post(onSuccess = GetToken.Response.class)
 public class GetToken {

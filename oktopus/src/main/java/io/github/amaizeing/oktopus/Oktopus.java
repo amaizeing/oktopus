@@ -51,6 +51,7 @@ public final class Oktopus {
 
     private RestClient restClient;
     private OktopusWorker worker;
+    private CacheService cacheService;
     private boolean ready = false;
     private final Map<Class<? extends Annotation>, Set<Class<?>>> requestAnnotationToAcceptableResponses
             = Map.of(OktopusRequestUrl.class, Set.of(String.class),
@@ -107,6 +108,7 @@ public final class Oktopus {
 
         getInstance().restClient = config.getRestClient();
         getInstance().worker = config.getWorker();
+        getInstance().cacheService = config.getCacheService();
 
         final var httpMethods = ClassIndex.getAnnotated(OktopusRequestType.class);
         for (Class<?> hm : httpMethods) {
@@ -283,7 +285,7 @@ public final class Oktopus {
                                 }
                                 return response;
                             }
-                            final T cacheResponse = RequestCache.get(cacheKey);
+                            final T cacheResponse = getInstance().cacheService.get(cacheKey);
                             if (cacheResponse != null) {
                                 LOGGER.debug("Get response of request: {} in cache", oktopusRequest.getRequestClass());
                                 return cacheResponse;
@@ -308,7 +310,7 @@ public final class Oktopus {
                             }
                             var cacheTtlArgs = getMethodArgs(cacheTtlMethod, annotationToValue);
                             final var ttl = cacheTtlMethod.invoke(requestInfo.getRequestInstance(), cacheTtlArgs);
-                            RequestCache.put(cacheKey, response, (Duration) ttl);
+                            getInstance().cacheService.put(cacheKey, response, (Duration) ttl);
                             return response;
                         } catch (Exception ex) {
                             return new Response<T>().setException(ex);
@@ -490,7 +492,6 @@ public final class Oktopus {
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> {
                     final Object cacheKey;
-
                     var localHeader = header;
                     var localBody = body;
                     if (cacheKeyMethod != null) {
