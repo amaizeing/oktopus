@@ -3,21 +3,19 @@ package io.github.amaizeing.oktopus;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-class RequestCache {
+class DefaultCacheService implements CacheService {
 
-    private static final RequestCache INSTANCE = new RequestCache();
-
+    private static final DefaultCacheService INSTANCE = new DefaultCacheService();
     private final Map<Object, CacheResult> cache = new HashMap<>();
-
     private static final float TTL_FACTOR = 0.9F;
 
-    private RequestCache() {
+    DefaultCacheService() {
     }
 
+    @Override
     @SuppressWarnings("unchecked")
-    public static <T> T get(Object key) {
+    public <T> T get(Object key) {
         var result = INSTANCE.cache.get(key);
         if (result == null) {
             return null;
@@ -30,7 +28,8 @@ class RequestCache {
         return null;
     }
 
-    public static void put(Object key, Object value, Duration ttl) {
+    @Override
+    public void put(Object key, Object value, Duration ttl) {
         final var result = new CacheResult(value, ttl);
         INSTANCE.cache.put(key, result);
     }
@@ -42,7 +41,7 @@ class RequestCache {
 
         public CacheResult(final Object value, Duration ttl) {
             this.value = value;
-            this.endTime = System.currentTimeMillis() + (long) (ttl.toMillis() * RequestCache.TTL_FACTOR);
+            this.endTime = System.currentTimeMillis() + (long) (ttl.toMillis() * DefaultCacheService.TTL_FACTOR);
         }
 
         private Object get() {

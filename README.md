@@ -66,8 +66,8 @@ following dependencies to the pom.xml.
 
 <dependency>
   <groupId>io.github.amaizeing</groupId>
-  <artifactId>amizeing-oktopus</artifactId>
-  <version>0.1.0</version>
+  <artifactId>amaizeing-oktopus</artifactId>
+  <version>0.1.1</version>
 </dependency>
 ```
 

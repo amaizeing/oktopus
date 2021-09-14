@@ -1,6 +1,7 @@
 package io.github.amaizeing.oktopus;
 
 import io.github.amaizeing.oktopus.exception.ClientRequestException;
+import io.github.amaizeing.oktopus.exception.OktopusException;
 import io.github.amaizeing.oktopus.util.JsonUtil;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -24,29 +25,34 @@ public class DefaultClient implements RestClient {
             requestInfo.getHeader().forEach((key, val) -> request.addHeader(String.valueOf(key), String.valueOf(val)));
         }
         final var method = requestInfo.getMethod();
+        final RequestBody requestBody;
+        if (requestInfo.getBody() != null) {
+            requestBody = RequestBody.create(JsonUtil.toJson(requestInfo.getBody(), null), JSON);
+        } else {
+            requestBody = RequestBody.create(new byte[]{});
+        }
         switch (method) {
-            case GET: {
+            case GET:
                 request.get();
                 break;
-            }
-            case DELETE: {
+            case DELETE:
                 request.delete();
                 break;
-            }
             case PUT:
-            case POST: {
-                if (requestInfo.getBody() != null) {
-                    final var requestBody = RequestBody.create(JsonUtil.toJson(requestInfo.getBody(), null), JSON);
-                    request.post(requestBody);
-                }
+                request.put(requestBody);
                 break;
-            }
-            case HEAD:
+            case POST:
+                request.post(requestBody);
+                break;
             case PATCH:
+                request.patch(requestBody);
+                break;
+            case HEAD:
+                request.head();
+                break;
             case OPTIONS:
             case TRACE:
             default: {
-                // TODO
                 return new ClientResponse().setException(new OperationNotSupportedException("TODO: Implement later"));
             }
         }
@@ -59,7 +65,13 @@ public class DefaultClient implements RestClient {
     }
 
     private ClientResponse makeRequest(RequestInfo requestInfo, Request request, RequestErrorHandler handler) throws IOException {
-        final var response = CLIENT.newCall(request).execute();
+        final okhttp3.Response response;
+        try {
+            response = CLIENT.newCall(request).execute();
+        } catch (Exception ex) {
+            // TODO : fail fast, handle error
+            throw new OktopusException();
+        }
 
         var clientResponse = new ClientResponse();
         clientResponse.setHttpStatusCode(response.code());
@@ -97,6 +109,5 @@ public class DefaultClient implements RestClient {
         response.headers().forEach(pair -> clientResponse.addHeader(pair.getFirst(), pair.getSecond()));
         return clientResponse;
     }
-
 
 }

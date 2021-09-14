@@ -4,7 +4,6 @@ import io.github.amaizeing.oktopus.annotation.OktopusCacheKey;
 import io.github.amaizeing.oktopus.annotation.OktopusCacheTtl;
 import io.github.amaizeing.oktopus.annotation.OktopusDependOn;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestBodies;
-import io.github.amaizeing.oktopus.annotation.OktopusRequestBody;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestHeader;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestHeaders;
 import io.github.amaizeing.oktopus.annotation.OktopusRequestKey;
@@ -17,7 +16,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -60,21 +58,11 @@ public class GetOrderDetail {
 
     @OktopusCacheKey
     public String cacheKey(@OktopusRequestKey long key, @OktopusRequestUrls Object url, @OktopusRequestHeader Object header, @OktopusRequestBodies Object body) {
-//        System.out.println("-------- trigger cache key here: " + key + " " + url);
-////        System.out.println("urls " + urls);
-//        System.out.println("header " + header);
-//        System.out.println("body " + body);
         return "order-detail-" + key;
     }
 
     @OktopusCacheTtl
     public Duration ttl(@OktopusRequestKey long key, @OktopusRequestUrl Object url, @OktopusRequestUrls Object urls, @OktopusRequestHeader Object header, @OktopusRequestHeaders Object headers) {
-        System.out.println("-----trigger ttl method----");
-        System.out.println("----- url ---- " + url);
-        System.out.println("----- urls---- " + urls);
-        System.out.println("----- header---- " + header);
-        System.out.println("----- headers---- " + headers);
-        System.out.println("----- key---- " + key);
         return Duration.ofSeconds(10);
     }
 

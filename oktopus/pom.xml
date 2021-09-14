@@ -6,7 +6,7 @@
 
   <groupId>io.github.amaizeing</groupId>
   <artifactId>amaizeing-oktopus</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
 
   <name>Amaizeing Oktopus</name>
   <description>Library for API aggregation</description>
